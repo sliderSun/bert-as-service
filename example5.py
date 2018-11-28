@@ -6,7 +6,6 @@
 
 import json
 import os
-import random
 
 import GPUtil
 import tensorflow as tf
@@ -46,8 +45,9 @@ laws_str = [str(x) for x in laws]
 def get_encodes(x):
     # x is `batch_size` of lines, each of which is a json object
     samples = [json.loads(l) for l in x]
-    # filter too short or too long seqs.
+    # filter too short or too long seqs and always take the first label
     samples = [s for s in samples if len(s['fact']) > 50]
+    labels = [[str(s['meta']['relevant_articles'][0])] for s in samples]
     text = [s['fact'][:100] for s in samples]
     # get a client from available clients
     bc_client = bc_clients.pop()
@@ -55,7 +55,6 @@ def get_encodes(x):
     # after use, put it back
     bc_clients.append(bc_client)
     # randomly choose a label
-    labels = [[str(random.choice(s['meta']['relevant_articles']))] for s in samples]
     return features, labels
 
 

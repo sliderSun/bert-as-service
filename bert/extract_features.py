@@ -20,6 +20,8 @@ from tensorflow.python.estimator.model_fn import EstimatorSpec
 
 from bert import tokenization, modeling
 
+tf.logging.set_verbosity(tf.logging.INFO)
+
 
 class PoolingStrategy(Enum):
     NONE = 0

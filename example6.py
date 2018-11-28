@@ -1,10 +1,15 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# Han Xiao <artex.xh@gmail.com> <https://hanxiao.github.io>
+
+# solving chinese law-article classification problem: https://github.com/thunlp/CAIL/blob/master/README_en.md
+
 import json
 import os
-import random
 
 import GPUtil
 import tensorflow as tf
-from tensorflow.python.estimator.canned.dnn import DNNClassifier
+from tensorflow.python.estimator.canned.linear import LinearClassifier
 from tensorflow.python.estimator.run_config import RunConfig
 from tensorflow.python.estimator.training import TrainSpec, EvalSpec, train_and_evaluate
 
@@ -16,11 +21,12 @@ tf.logging.set_verbosity(tf.logging.INFO)
 
 train_fp = ['/data/cips/data/lab/data/dataset/final_all_data/exercise_contest/data_train.json']
 eval_fp = ['/data/cips/data/lab/data/dataset/final_all_data/exercise_contest/data_test.json']
-batch_size = 64
+
+batch_size = 128
 num_parallel_calls = 4
 num_concurrent_clients = num_parallel_calls * 2  # should be at least greater than `num_parallel_calls`
 
-bc_client = BertClient(show_server_config=False, port=5557, port_out=5558)
+bc_clients = [BertClient(show_server_config=False, port=5557, port_out=5558) for _ in range(num_concurrent_clients)]
 
 # hardcoded law_ids
 laws = [184, 336, 314, 351, 224, 132, 158, 128, 223, 308, 341, 349, 382, 238, 369, 248, 266, 313, 127, 340, 288, 172,
@@ -39,9 +45,16 @@ laws_str = [str(x) for x in laws]
 def get_encodes(x):
     # x is `batch_size` of lines, each of which is a json object
     samples = [json.loads(l) for l in x]
-    text = [s['fact'][:50] + s['fact'][-50:] for s in samples]
+    # filter too short or too long seqs and always take the first label
+    samples = [s for s in samples if len(s['fact']) > 50]
+    labels = [[str(s['meta']['relevant_articles'][0])] for s in samples]
+    text = [s['fact'][:100] for s in samples]
+    # get a client from available clients
+    bc_client = bc_clients.pop()
     features = bc_client.encode(text)
-    labels = [[str(random.choice(s['meta']['relevant_articles']))] for s in samples]
+    # after use, put it back
+    bc_clients.append(bc_client)
+    # randomly choose a label
     return features, labels
 
 
@@ -49,20 +62,19 @@ config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 run_config = RunConfig(model_dir='/data/cips/save/%s' % MODEL_ID,
                        session_config=config,
-                       save_checkpoints_steps=2000)
+                       save_checkpoints_steps=1000)
 
-estimator = DNNClassifier(
-    hidden_units=[512],
+estimator = LinearClassifier(
     feature_columns=[tf.feature_column.numeric_column('feature', shape=(768,))],
     n_classes=len(laws),
     config=run_config,
-    label_vocabulary=laws_str,
-    dropout=0.1)
+    label_vocabulary=laws_str)
 
 input_fn = lambda fp: (tf.data.TextLineDataset(fp)
                        .apply(tf.contrib.data.shuffle_and_repeat(buffer_size=10000))
                        .batch(batch_size)
-                       .map(lambda x: tf.py_func(get_encodes, [x], [tf.float32, tf.string], name='bert_client'))
+                       .map(lambda x: tf.py_func(get_encodes, [x], [tf.float32, tf.string], name='bert_client'),
+                            num_parallel_calls=num_parallel_calls)
                        .map(lambda x, y: ({'feature': x}, y))
                        .prefetch(20))
 

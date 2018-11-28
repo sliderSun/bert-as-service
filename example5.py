@@ -46,7 +46,9 @@ laws_str = [str(x) for x in laws]
 def get_encodes(x):
     # x is `batch_size` of lines, each of which is a json object
     samples = [json.loads(l) for l in x]
-    text = [s['fact'][10:110] for s in samples]
+    # filter too short or too long seqs.
+    samples = [s for s in samples if len(s['fact']) > 50]
+    text = [s['fact'][:100] for s in samples]
     # get a client from available clients
     bc_client = bc_clients.pop()
     features = bc_client.encode(text)

@@ -822,10 +822,10 @@ def main(_):
             is_training=True,
             drop_remainder=True)
 
-        with tf.Session() as sess:
-            sess.run(tf.global_variables_initializer())
-            print(sess.run(train_input_fn({'batch_size': 10}).make_one_shot_iterator().get_next()))
-            input()
+        # with tf.Session() as sess:
+        #     sess.run(tf.global_variables_initializer())
+        #     print(sess.run(train_input_fn({'batch_size': 10}).make_one_shot_iterator().get_next()))
+        #     input()
 
         estimator.train(input_fn=train_input_fn, max_steps=num_train_steps)
 

@@ -414,7 +414,6 @@ def file_based_input_fn_builder(input_file, num_hidden, is_training,
             if t.dtype == tf.int64:
                 t = tf.to_int32(t)
             example[name] = t
-        print(example)
         return example
 
     def input_fn(params):
@@ -670,6 +669,12 @@ def main(_):
             num_hidden=FLAGS.num_hidden,
             is_training=True,
             drop_remainder=True)
+
+        with tf.Session() as sess:
+            sess.run(tf.global_variables_initializer())
+            print(sess.run(train_input_fn({'batch_size': 2}).make_one_shot_iterator().get_next()))
+            input()
+
         estimator.train(input_fn=train_input_fn, max_steps=num_train_steps)
 
     if FLAGS.do_eval:

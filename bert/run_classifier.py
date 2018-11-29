@@ -24,7 +24,7 @@ import os
 
 import tensorflow as tf
 
-from bert import tokenization, modeling, optimization
+from . import tokenization, modeling, optimization
 
 flags = tf.flags
 

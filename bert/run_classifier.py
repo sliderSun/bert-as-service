@@ -22,9 +22,10 @@ import collections
 import csv
 import os
 
+import modeling
+import optimization
 import tensorflow as tf
-
-from . import tokenization, modeling, optimization
+import tokenization
 
 flags = tf.flags
 

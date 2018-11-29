@@ -821,6 +821,12 @@ def main(_):
             seq_length=FLAGS.max_seq_length,
             is_training=True,
             drop_remainder=True)
+
+        with tf.Session() as sess:
+            sess.run(tf.global_variables_initializer())
+            print(sess.run(train_input_fn({'batch_size': 10}).make_one_shot_iterator().get_next()))
+            input()
+
         estimator.train(input_fn=train_input_fn, max_steps=num_train_steps)
 
     if FLAGS.do_eval:

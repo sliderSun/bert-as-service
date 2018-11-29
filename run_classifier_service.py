@@ -666,7 +666,7 @@ def main(_):
         tf.logging.info("  Num steps = %d", num_train_steps)
         train_input_fn = file_based_input_fn_builder(
             input_file=train_file,
-            seq_length=FLAGS.num_hidden,
+            num_hidden=FLAGS.num_hidden,
             is_training=True,
             drop_remainder=True)
         estimator.train(input_fn=train_input_fn, max_steps=num_train_steps)
@@ -693,7 +693,7 @@ def main(_):
         eval_drop_remainder = True if FLAGS.use_tpu else False
         eval_input_fn = file_based_input_fn_builder(
             input_file=eval_file,
-            seq_length=FLAGS.num_hidden,
+            num_hidden=FLAGS.num_hidden,
             is_training=False,
             drop_remainder=eval_drop_remainder)
 
@@ -725,7 +725,7 @@ def main(_):
         predict_drop_remainder = True if FLAGS.use_tpu else False
         predict_input_fn = file_based_input_fn_builder(
             input_file=predict_file,
-            seq_length=FLAGS.num_hidden,
+            num_hidden=FLAGS.num_hidden,
             is_training=False,
             drop_remainder=predict_drop_remainder)
 

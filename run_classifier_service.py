@@ -479,7 +479,7 @@ def create_model(is_training, feature, labels, num_labels):
             # I.e., 0.1 dropout
             output_layer = tf.nn.dropout(output_layer, keep_prob=0.9)
 
-        logits = linear_logit(output_layer, num_labels)
+        logits = bilinear_logit(output_layer, num_labels)
         # logits = tf.matmul(output_layer, output_weights, transpose_b=True)
         # logits = tf.nn.bias_add(logits, output_bias)
         probabilities = tf.nn.softmax(logits, axis=-1)

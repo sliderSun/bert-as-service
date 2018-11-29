@@ -54,7 +54,7 @@ flags.DEFINE_string("vocab_file", None,
                     "The vocabulary file that the BERT model was trained on.")
 
 flags.DEFINE_string(
-    "output_dir", None,
+    "output_dir", '/data/cips/save/%s' % MODEL_ID,
     "The output directory where the model checkpoints will be written.")
 
 ## Other parameters
@@ -792,7 +792,7 @@ def main(_):
     run_config = tf.contrib.tpu.RunConfig(
         cluster=tpu_cluster_resolver,
         master=FLAGS.master,
-        model_dir='/data/cips/save/%s' % MODEL_ID,
+        model_dir=FLAGS.output_dir,
         session_config=config_pt,
         save_checkpoints_steps=FLAGS.save_checkpoints_steps,
         tpu_config=tf.contrib.tpu.TPUConfig(

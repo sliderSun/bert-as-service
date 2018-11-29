@@ -414,7 +414,7 @@ def file_based_input_fn_builder(input_file, num_hidden, is_training,
             if t.dtype == tf.int64:
                 t = tf.to_int32(t)
             example[name] = t
-
+        print(example)
         return example
 
     def input_fn(params):

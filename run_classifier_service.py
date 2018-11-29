@@ -26,6 +26,7 @@ import GPUtil
 import tensorflow as tf
 
 from bert import modeling, tokenization, optimization
+from bert.modeling import create_initializer
 from gpu_env import MODEL_ID
 from service.client import BertClient
 
@@ -474,9 +475,15 @@ def create_model(is_training, feature, labels, num_labels):
         "output_bias", [num_labels], initializer=tf.zeros_initializer())
 
     with tf.variable_scope("loss"):
-        # if is_training:
-        #     # I.e., 0.1 dropout
-        #     output_layer = tf.nn.dropout(output_layer, keep_prob=0.9)
+        # move pooler outside from modeling.py
+        output_layer = tf.layers.dense(
+            output_layer,
+            hidden_size,
+            activation=tf.tanh,
+            kernel_initializer=create_initializer(0.02))
+        if is_training:
+            # I.e., 0.1 dropout
+            output_layer = tf.nn.dropout(output_layer, keep_prob=0.9)
 
         # logits = linear_logit(output_layer, num_labels)
         logits = tf.matmul(output_layer, output_weights, transpose_b=True)

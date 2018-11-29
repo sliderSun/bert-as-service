@@ -22,10 +22,16 @@ import collections
 import csv
 import os
 
+import GPUtil
 import modeling
 import optimization
 import tensorflow as tf
 import tokenization
+
+from gpu_env import MODEL_ID
+
+os.environ['CUDA_VISIBLE_DEVICES'] = str(GPUtil.getFirstAvailable()[0])
+tf.logging.set_verbosity(tf.logging.INFO)
 
 flags = tf.flags
 
@@ -781,10 +787,13 @@ def main(_):
             FLAGS.tpu_name, zone=FLAGS.tpu_zone, project=FLAGS.gcp_project)
 
     is_per_host = tf.contrib.tpu.InputPipelineConfig.PER_HOST_V2
+    config_pt = tf.ConfigProto()
+    config_pt.gpu_options.allow_growth = True
     run_config = tf.contrib.tpu.RunConfig(
         cluster=tpu_cluster_resolver,
         master=FLAGS.master,
-        model_dir=FLAGS.output_dir,
+        model_dir='/data/cips/save/%s' % MODEL_ID,
+        session_config=config_pt,
         save_checkpoints_steps=FLAGS.save_checkpoints_steps,
         tpu_config=tf.contrib.tpu.TPUConfig(
             iterations_per_loop=FLAGS.iterations_per_loop,

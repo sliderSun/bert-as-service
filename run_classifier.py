@@ -23,12 +23,10 @@ import csv
 import os
 
 import GPUtil
-import modeling
-import optimization
 import tensorflow as tf
-import tokenization
 
-from ..gpu_env import MODEL_ID
+from bert import modeling, tokenization, optimization
+from gpu_env import MODEL_ID
 
 os.environ['CUDA_VISIBLE_DEVICES'] = str(GPUtil.getFirstAvailable()[0])
 tf.logging.set_verbosity(tf.logging.INFO)

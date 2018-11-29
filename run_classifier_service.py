@@ -72,6 +72,10 @@ flags.DEFINE_integer(
     "Sequences longer than this will be truncated, and sequences shorter "
     "than this will be padded.")
 
+flags.DEFINE_integer(
+    "num_hidden", 768,
+    "the size of BERT pooling output")
+
 flags.DEFINE_bool("do_train", False, "Whether to run training.")
 
 flags.DEFINE_bool("do_eval", False, "Whether to run eval on the dev set.")
@@ -390,14 +394,12 @@ def file_based_convert_examples_to_features(
         writer.write(tf_example.SerializeToString())
 
 
-def file_based_input_fn_builder(input_file, seq_length, is_training,
+def file_based_input_fn_builder(input_file, num_hidden, is_training,
                                 drop_remainder):
     """Creates an `input_fn` closure to be passed to TPUEstimator."""
 
     name_to_features = {
-        "input_ids": tf.FixedLenFeature([seq_length], tf.int64),
-        "input_mask": tf.FixedLenFeature([seq_length], tf.int64),
-        "segment_ids": tf.FixedLenFeature([seq_length], tf.int64),
+        "feature": tf.FixedLenFeature([num_hidden], tf.float32),
         "label_ids": tf.FixedLenFeature([], tf.int64),
     }
 
@@ -454,23 +456,14 @@ def _truncate_seq_pair(tokens_a, tokens_b, max_length):
             tokens_b.pop()
 
 
-def create_model(bert_config, is_training, input_ids, input_mask, segment_ids,
-                 labels, num_labels, use_one_hot_embeddings):
+def create_model(is_training, feature, labels, num_labels):
     """Creates a classification model."""
-    model = modeling.BertModel(
-        config=bert_config,
-        is_training=is_training,
-        input_ids=input_ids,
-        input_mask=input_mask,
-        token_type_ids=segment_ids,
-        use_one_hot_embeddings=use_one_hot_embeddings)
-
     # In the demo, we are doing a simple classification task on the entire
     # segment.
     #
     # If you want to use the token-level output, use model.get_sequence_output()
     # instead.
-    output_layer = model.get_pooled_output()
+    output_layer = feature
 
     hidden_size = output_layer.shape[-1].value
 
@@ -511,16 +504,13 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
         for name in sorted(features.keys()):
             tf.logging.info("  name = %s, shape = %s" % (name, features[name].shape))
 
-        input_ids = features["input_ids"]
-        input_mask = features["input_mask"]
-        segment_ids = features["segment_ids"]
+        feature = features["feature"]
         label_ids = features["label_ids"]
 
         is_training = (mode == tf.estimator.ModeKeys.TRAIN)
 
-        (total_loss, per_example_loss, logits, probabilities) = create_model(
-            bert_config, is_training, input_ids, input_mask, segment_ids, label_ids,
-            num_labels, use_one_hot_embeddings)
+        (total_loss, per_example_loss, logits, probabilities) = create_model(is_training, feature, label_ids,
+                                                                             num_labels)
 
         tvars = tf.trainable_variables()
         initialized_variable_names = {}
@@ -676,7 +666,7 @@ def main(_):
         tf.logging.info("  Num steps = %d", num_train_steps)
         train_input_fn = file_based_input_fn_builder(
             input_file=train_file,
-            seq_length=FLAGS.max_seq_length,
+            seq_length=FLAGS.num_hidden,
             is_training=True,
             drop_remainder=True)
         estimator.train(input_fn=train_input_fn, max_steps=num_train_steps)
@@ -703,7 +693,7 @@ def main(_):
         eval_drop_remainder = True if FLAGS.use_tpu else False
         eval_input_fn = file_based_input_fn_builder(
             input_file=eval_file,
-            seq_length=FLAGS.max_seq_length,
+            seq_length=FLAGS.num_hidden,
             is_training=False,
             drop_remainder=eval_drop_remainder)
 
@@ -735,7 +725,7 @@ def main(_):
         predict_drop_remainder = True if FLAGS.use_tpu else False
         predict_input_fn = file_based_input_fn_builder(
             input_file=predict_file,
-            seq_length=FLAGS.max_seq_length,
+            seq_length=FLAGS.num_hidden,
             is_training=False,
             drop_remainder=predict_drop_remainder)
 

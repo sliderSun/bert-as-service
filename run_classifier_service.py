@@ -373,7 +373,7 @@ def file_based_convert_examples_to_features(
     list_label = [label_map[example.label] for example in examples]
 
     tf.logging.info("***** Encoding sentences to vecs *****")
-    bc = BertClient()
+    bc = BertClient(port=5557, port_out=5558)
     list_vec = bc.encode(list_str)
     tf.logging.info("done!")
 

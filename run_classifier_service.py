@@ -27,6 +27,7 @@ import tensorflow as tf
 
 from bert import modeling, tokenization, optimization
 from gpu_env import MODEL_ID
+from service.client import BertClient
 
 os.environ['CUDA_VISIBLE_DEVICES'] = str(GPUtil.getFirstAvailable()[0])
 
@@ -364,31 +365,26 @@ def file_based_convert_examples_to_features(
     """Convert a set of `InputExample`s to a TFRecord file."""
 
     label_map = {label: idx for (idx, label) in enumerate(label_list)}
-    list_str = [example.text_a + ('||| %s' % example.text_b if example.text_b else '') for example in examples]
+    list_str = [example.text_a + (' ||| %s' % example.text_b if example.text_b else '') for example in examples]
     list_label = [label_map[example.label] for example in examples]
 
-    print(list_str)
-    print(list_label)
-    exit()
+    tf.logging.info("***** Encoding sentences to vecs *****")
+    bc = BertClient()
+    list_vec = bc.encode(list_str)
+    tf.logging.info("done!")
 
     writer = tf.python_io.TFRecordWriter(output_file)
 
-    for (ex_index, example) in enumerate(examples):
-        if ex_index % 10000 == 0:
-            tf.logging.info("Writing example %d of %d" % (ex_index, len(examples)))
-
-        feature = convert_single_example(ex_index, example, label_list,
-                                         max_seq_length, tokenizer)
+    for (label_id, vec) in zip(list_label, list_vec):
+        def create_float_feature(values):
+            return tf.train.Feature(float_list=tf.train.FloatList(value=values))
 
         def create_int_feature(values):
-            f = tf.train.Feature(int64_list=tf.train.Int64List(value=list(values)))
-            return f
+            return tf.train.Feature(int64_list=tf.train.Int64List(value=list(values)))
 
         features = collections.OrderedDict()
-        features["input_ids"] = create_int_feature(feature.input_ids)
-        features["input_mask"] = create_int_feature(feature.input_mask)
-        features["feature"] = create_int_feature(feature.segment_ids)
-        features["label_ids"] = create_int_feature([feature.label_id])
+        features["feature"] = create_float_feature(vec)
+        features["label_ids"] = create_int_feature([label_id])
 
         tf_example = tf.train.Example(features=tf.train.Features(feature=features))
         writer.write(tf_example.SerializeToString())

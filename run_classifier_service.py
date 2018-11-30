@@ -492,10 +492,11 @@ def create_model(is_training, feature, labels, num_labels):
         probabilities = tf.nn.softmax(logits, axis=-1)
         log_probs = tf.nn.log_softmax(logits, axis=-1)
 
+
         one_hot_labels = tf.one_hot(labels, depth=num_labels, dtype=tf.float32)
 
         per_example_loss = -tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
-        loss = tf.reduce_mean(per_example_loss)
+        loss = tf.reduce_mean(tf.losses.sparse_softmax_cross_entropy(labels, logits))
 
         return (loss, per_example_loss, logits, probabilities)
 

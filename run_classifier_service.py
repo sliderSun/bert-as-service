@@ -27,7 +27,6 @@ import tensorflow as tf
 
 from bert import modeling, tokenization, optimization
 from gpu_env import MODEL_ID
-from nlp.encode_blocks import LSTM_encode
 from nlp.nn import bilinear_logit
 from service.client import BertClient
 
@@ -478,7 +477,11 @@ def create_model(is_training, feature, labels, num_labels):
     #
     # output_bias = tf.get_variable(
     #     "output_bias", [num_labels], initializer=tf.zeros_initializer())
+    def lstm_cell():
+        return tf.nn.rnn_cell.BasicLSTMCell(256)
 
+    stacked_lstm = tf.nn.rnn_cell.MultiRNNCell([lstm_cell() for _ in range(3)])
+    initial_state = state = stacked_lstm.zero_state(output_layer.shape[0].value, tf.float32)
     with tf.variable_scope("loss"):
         # move pooler outside from modeling.py
         # output_layer = tf.layers.dense(
@@ -486,9 +489,7 @@ def create_model(is_training, feature, labels, num_labels):
         #     hidden_size,
         #     activation=tf.tanh,
         #     kernel_initializer=create_initializer(0.02))
-        output_layer = tf.reduce_max(LSTM_encode(output_layer,
-                                                 num_layers=3, num_units=256,
-                                                 direction='bidirectional'), axis=1)
+        output_layer = tf.reduce_max(stacked_lstm(output_layer, initial_state), axis=1)
 
         logits = bilinear_logit(output_layer, num_labels,
                                 act_fn=tf.tanh,

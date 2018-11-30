@@ -486,7 +486,8 @@ def create_model(is_training, feature, labels, num_labels):
         #     hidden_size,
         #     activation=tf.tanh,
         #     kernel_initializer=create_initializer(0.02))
-        output_layer = tf.reduce_max(LSTM_encode(output_layer), axis=1)
+        output_layer = tf.reduce_max(LSTM_encode(output_layer,
+                                                 num_layers=3, num_units=256), axis=1)
 
         logits = bilinear_logit(output_layer, num_labels,
                                 act_fn=tf.tanh,

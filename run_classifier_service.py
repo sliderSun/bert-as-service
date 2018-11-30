@@ -27,6 +27,8 @@ import tensorflow as tf
 
 from bert import modeling, tokenization, optimization
 from gpu_env import MODEL_ID
+from nlp.encode_blocks import LSTM_encode
+from nlp.nn import bilinear_logit
 from service.client import BertClient
 
 os.environ['CUDA_VISIBLE_DEVICES'] = str(GPUtil.getFirstAvailable()[0])
@@ -399,7 +401,7 @@ def file_based_input_fn_builder(input_file, num_hidden, is_training,
     """Creates an `input_fn` closure to be passed to TPUEstimator."""
 
     name_to_features = {
-        "feature": tf.FixedLenFeature([num_hidden], tf.float32),
+        "feature": tf.FixedLenFeature([FLAGS.max_seq_length, num_hidden], tf.float32),
         "label_ids": tf.FixedLenFeature([], tf.int64),
     }
 
@@ -480,9 +482,7 @@ def create_model(is_training, feature, labels, num_labels):
         #     hidden_size,
         #     activation=tf.tanh,
         #     kernel_initializer=create_initializer(0.02))
-        if is_training:
-            # I.e., 0.1 dropout
-            output_layer = tf.nn.dropout(output_layer, keep_prob=0.9)
+        output_layer = tf.reduce_max(LSTM_encode(output_layer), axis=1)
 
         logits = bilinear_logit(output_layer, num_labels,
                                 act_fn=tf.tanh,
@@ -491,7 +491,6 @@ def create_model(is_training, feature, labels, num_labels):
         # logits = tf.nn.bias_add(logits, output_bias)
         probabilities = tf.nn.softmax(logits, axis=-1)
         log_probs = tf.nn.log_softmax(logits, axis=-1)
-
 
         one_hot_labels = tf.one_hot(labels, depth=num_labels, dtype=tf.float32)
 
@@ -753,37 +752,6 @@ def main(_):
                 output_line = "\t".join(
                     str(class_probability) for class_probability in prediction) + "\n"
                 writer.write(output_line)
-
-
-initializer = tf.contrib.layers.variance_scaling_initializer(factor=1.0,
-                                                             mode='FAN_AVG',
-                                                             uniform=True,
-                                                             dtype=tf.float32)
-initializer_relu = tf.contrib.layers.variance_scaling_initializer(factor=2.0,
-                                                                  mode='FAN_IN',
-                                                                  uniform=False,
-                                                                  dtype=tf.float32)
-regularizer = tf.contrib.layers.l2_regularizer(scale=3e-7)
-
-
-def linear_logit(x, units, act_fn=None, dropout_keep=1., use_layer_norm=False, scope=None, reuse=None, **kwargs):
-    with tf.variable_scope(scope or 'linear_logit', reuse=reuse):
-        logit = tf.layers.dense(x, units=units, activation=act_fn,
-                                kernel_initializer=initializer,
-                                kernel_regularizer=regularizer)
-        # do dropout
-        logit = tf.nn.dropout(logit, keep_prob=dropout_keep)
-        if use_layer_norm:
-            logit = tf.contrib.layers.layer_norm(logit)
-        return logit
-
-
-def bilinear_logit(x, units, act_fn=None,
-                   first_units=256,
-                   first_act_fn=tf.nn.relu, scope=None, **kwargs):
-    with tf.variable_scope(scope or 'bilinear_logit'):
-        first = linear_logit(x, first_units, act_fn=first_act_fn, scope='first', **kwargs)
-        return linear_logit(first, units, scope='second', act_fn=act_fn, **kwargs)
 
 
 if __name__ == "__main__":

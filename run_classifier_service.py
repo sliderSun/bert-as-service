@@ -383,7 +383,7 @@ def file_based_convert_examples_to_features(
 
     for (label_id, vec) in zip(list_label, list_vec):
         def create_float_feature(values):
-            return tf.train.Feature(float_list=tf.train.FloatList(value=list(values)))
+            return tf.train.Feature(float_list=tf.train.FloatList(value=values.reshape(-1)))
 
         def create_int_feature(values):
             return tf.train.Feature(int64_list=tf.train.Int64List(value=list(values)))
@@ -401,7 +401,7 @@ def file_based_input_fn_builder(input_file, num_hidden, is_training,
     """Creates an `input_fn` closure to be passed to TPUEstimator."""
 
     name_to_features = {
-        "feature": tf.FixedLenFeature([FLAGS.max_seq_length, num_hidden], tf.float32),
+        "feature": tf.FixedLenFeature([FLAGS.max_seq_length * num_hidden], tf.float32),
         "label_ids": tf.FixedLenFeature([], tf.int64),
     }
 
@@ -415,6 +415,9 @@ def file_based_input_fn_builder(input_file, num_hidden, is_training,
             t = example[name]
             if t.dtype == tf.int64:
                 t = tf.to_int32(t)
+            if name == 'feature':
+                # reconstruct
+                t = t.reshape(FLAGS.max_seq_length, -1)
             example[name] = t
         return example
 

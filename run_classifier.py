@@ -547,7 +547,7 @@ def create_model(bert_config, is_training, input_ids, input_mask, segment_ids,
     """Creates a classification model."""
     model = modeling.BertModel(
         config=bert_config,
-        is_training=is_training,
+        is_training=False,
         input_ids=input_ids,
         input_mask=input_mask,
         token_type_ids=segment_ids,

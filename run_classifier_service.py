@@ -417,7 +417,8 @@ def file_based_input_fn_builder(input_file, num_hidden, is_training,
                 t = tf.to_int32(t)
             if name == 'feature':
                 # reconstruct
-                t = t.reshape(FLAGS.max_seq_length, -1)
+                # t = t.reshape(FLAGS.max_seq_length, -1)
+                t = tf.reshape(t, [FLAGS.max_seq_length, -1])
             example[name] = t
         return example
 

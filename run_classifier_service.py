@@ -556,8 +556,11 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
 
         output_spec = None
         if mode == tf.estimator.ModeKeys.TRAIN:
+            global_step = tf.get_variable('global_step', shape=[], dtype=tf.int32,
+                                          initializer=tf.constant_initializer(0),
+                                          trainable=False)
             optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, beta1=0.8, beta2=0.999, epsilon=1e-7)
-            train_op = optimizer.minimize(total_loss)
+            train_op = optimizer.minimize(total_loss, global_step=global_step)
             output_spec = tf.contrib.tpu.TPUEstimatorSpec(
                 mode=mode,
                 loss=total_loss,

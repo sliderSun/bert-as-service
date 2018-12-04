@@ -16,11 +16,8 @@ print('loading...')
 with open(twitter_data, 'r', encoding='utf8', errors='ignore') as fp:
     tmp = [v.split(',') for v in fp]
     tmp = [(int(v[0].strip().strip('"')), v[-1].strip().strip('"').strip()) for v in tmp]
-    tmp = [v for v in tmp if v[1]]
-    num_label = len(set(v[0] for v in tmp))
-    print('labels: %s' % set(v[0] for v in tmp))
+    dataset = [v for v in tmp if v[1]]
 
-exit()
 print('%d samples loaded' % len(dataset))
 
 subset = random.sample(dataset, num_sample)
@@ -38,4 +35,4 @@ vis_x = embeddings[:, 0]
 vis_y = embeddings[:, 1]
 plt.scatter(vis_x, vis_y, c=subset_label, cmap=plt.cm.get_cmap("jet", num_label), marker='.')
 plt.colorbar(ticks=range(num_label))
-savefig('layer-[%d].png' % (-2), bbox_inches='tight')
+savefig('layer.png' % (-2), bbox_inches='tight')

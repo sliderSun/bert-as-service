@@ -4,10 +4,10 @@ import matplotlib
 
 matplotlib.use('Agg')
 import pandas as pd
-from MulticoreTSNE import MulticoreTSNE as TSNE
 from matplotlib import pyplot as plt
 from matplotlib.pyplot import savefig
 import numpy as np
+from sklearn.decomposition import PCA
 
 from service.client import BertClient
 
@@ -16,7 +16,7 @@ num_sample = 10000
 data = pd.read_csv('/data/cips/data/lab/data/dataset/uci-news-aggregator.csv', usecols=['TITLE', 'CATEGORY'])
 
 # I do aspire here to have balanced classes
-num_of_categories = 45000
+num_of_categories = 5000
 shuffled = data.reindex(np.random.permutation(data.index))
 e = shuffled[shuffled['CATEGORY'] == 'e'][:num_of_categories]
 b = shuffled[shuffled['CATEGORY'] == 'b'][:num_of_categories]
@@ -41,7 +41,9 @@ print('unique label: %d' % num_label)
 
 bc = BertClient(port=6000, port_out=6001)
 subset_vec = bc.encode(subset_text)
-embeddings = TSNE(n_jobs=8).fit_transform(subset_vec)
+# embeddings = TSNE(n_jobs=8).fit_transform(subset_vec)
+pca = PCA(n_components=2)
+embeddings = pca.fit_transform(subset_vec)
 vis_x = embeddings[:, 0]
 vis_y = embeddings[:, 1]
 plt.scatter(vis_x, vis_y, c=subset_label, cmap=plt.cm.get_cmap("jet", num_label), marker='.')

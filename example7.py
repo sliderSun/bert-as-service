@@ -32,5 +32,5 @@ embeddings = TSNE(n_jobs=4).fit_transform(subset_vec)
 vis_x = embeddings[:, 0]
 vis_y = embeddings[:, 1]
 plt.scatter(vis_x, vis_y, c=subset_label, cmap=plt.cm.get_cmap("jet", 10), marker='.')
-plt.colorbar(ticks=range(len(subset_label)))
+plt.colorbar(ticks=range(len(set(subset_label))))
 savefig('layer-[%d].png' % (-2), bbox_inches='tight')

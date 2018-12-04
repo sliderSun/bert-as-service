@@ -9,7 +9,7 @@ from matplotlib.pyplot import savefig
 
 from service.client import BertClient
 
-num_sample = 1000
+num_sample = 10000
 twitter_data = '/data/cips/data/lab/data/dataset/training.1600000.processed.noemoticon.csv'
 
 print('loading...')
@@ -25,6 +25,7 @@ subset_text = [v[1] for v in subset]
 subset_label = [v[0] for v in subset]
 print('min_seq_len: %d' % min(len(v.split()) for v in subset_text))
 print('max_seq_len: %d' % max(len(v.split()) for v in subset_text))
+print('unique label: %d' % len(set(subset_label)))
 
 bc = BertClient(port=6000, port_out=6001)
 subset_vec = bc.encode(subset_text)

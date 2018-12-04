@@ -9,15 +9,18 @@ from matplotlib.pyplot import savefig
 
 from service.client import BertClient
 
-num_sample = 100000
+num_sample = 1000
 twitter_data = '/data/cips/data/lab/data/dataset/training.1600000.processed.noemoticon.csv'
 
 print('loading...')
 with open(twitter_data, 'r', encoding='utf8', errors='ignore') as fp:
     tmp = [v.split(',') for v in fp]
-    dataset = [(int(v[0].strip().strip('"')), v[-1].strip().strip('"').strip()) for v in tmp]
-    dataset = [v for v in dataset if v[1]]
+    tmp = [(int(v[0].strip().strip('"')), v[-1].strip().strip('"').strip()) for v in tmp]
+    tmp = [v for v in tmp if v[1]]
+    num_label = len(set(v[0] for v in tmp))
+    print('labels: %s' % set(v[0] for v in tmp))
 
+exit()
 print('%d samples loaded' % len(dataset))
 
 subset = random.sample(dataset, num_sample)

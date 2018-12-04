@@ -32,8 +32,8 @@ concated.loc[concated['CATEGORY'] == 'b', 'LABEL'] = 1
 concated.loc[concated['CATEGORY'] == 't', 'LABEL'] = 2
 concated.loc[concated['CATEGORY'] == 'm', 'LABEL'] = 3
 
-subset_text = concated['TITLE'].values
-subset_label = concated['LABEL'].values
+subset_text = list(concated['TITLE'].values)
+subset_label = list(concated['LABEL'].values)
 num_label = len(set(subset_label))
 print('min_seq_len: %d' % min(len(v.split()) for v in subset_text))
 print('max_seq_len: %d' % max(len(v.split()) for v in subset_text))

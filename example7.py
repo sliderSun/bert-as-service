@@ -1,5 +1,6 @@
 import random
 
+import matplotlib
 from MulticoreTSNE import MulticoreTSNE as TSNE
 from matplotlib import pyplot as plt
 from matplotlib.pyplot import savefig

@@ -9,7 +9,7 @@ from matplotlib.pyplot import savefig
 
 from service.client import BertClient
 
-num_sample = 1000
+num_sample = 10000
 twitter_data = '/data/cips/data/lab/data/dataset/training.1600000.processed.noemoticon.csv'
 
 print('loading...')
@@ -20,7 +20,11 @@ with open(twitter_data, 'r', encoding='utf8', errors='ignore') as fp:
 
 print('%d samples loaded' % len(dataset))
 
+random.seed(531)
 subset = random.sample(dataset, num_sample)
+print(subset[:10])
+print(subset[-10:])
+
 subset_text = [v[1] for v in subset]
 subset_label = [v[0] for v in subset]
 num_label = len(set(subset_label))

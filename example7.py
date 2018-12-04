@@ -2,6 +2,9 @@ import random
 
 from MulticoreTSNE import MulticoreTSNE as TSNE
 from matplotlib import pyplot as plt
+from matplotlib.pyplot import savefig
+
+matplotlib.use('Agg')
 
 from service.client import BertClient
 
@@ -29,3 +32,4 @@ vis_x = embeddings[:, 0]
 vis_y = embeddings[:, 1]
 plt.scatter(vis_x, vis_y, c=subset_label, cmap=plt.cm.get_cmap("jet", 10), marker='.')
 plt.colorbar(ticks=range(len(subset_label)))
+savefig('layer-[%d].png' % (-2), bbox_inches='tight')

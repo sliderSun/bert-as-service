@@ -1,11 +1,11 @@
 import random
 
 import matplotlib
+
+matplotlib.use('Agg')
 from MulticoreTSNE import MulticoreTSNE as TSNE
 from matplotlib import pyplot as plt
 from matplotlib.pyplot import savefig
-
-matplotlib.use('Agg')
 
 from service.client import BertClient
 

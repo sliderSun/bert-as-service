@@ -14,7 +14,7 @@ print('%d samples loaded' % len(dataset))
 
 subset = random.sample(dataset, num_sample)
 subset_text = [v[1] for v in subset]
-print('max_seq_len: %d' % min(len(v) for v in subset_text))
+print('max_seq_len: %d' % max(len(v) for v in subset_text))
 
 exit()
 bc = BertClient(port=6000, port_out=6001)

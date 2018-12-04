@@ -39,4 +39,4 @@ vis_x = embeddings[:, 0]
 vis_y = embeddings[:, 1]
 plt.scatter(vis_x, vis_y, c=subset_label, cmap=plt.cm.get_cmap("jet", num_label), marker='.')
 plt.colorbar(ticks=range(num_label))
-savefig('layer.png', bbox_inches='tight')
+savefig('layer-%d.png' % random.randint(0, 100), bbox_inches='tight')

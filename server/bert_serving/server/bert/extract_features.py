@@ -105,7 +105,7 @@ def model_fn_builder(bert_config, init_checkpoint, use_one_hot_embeddings=False,
         input_type_ids = features["input_type_ids"]
 
         jit_scope = tf.contrib.compiler.jit.experimental_jit_scope if use_xla else contextlib.suppress
-        sess = tf.get_default_session()
+        sess = tf.Session()
 
         with jit_scope():
 

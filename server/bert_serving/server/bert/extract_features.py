@@ -156,6 +156,8 @@ def model_fn_builder(bert_config, init_checkpoint, use_one_hot_embeddings=False,
                     pooled = encoder_layer
                 else:
                     raise NotImplementedError()
+
+            pooled = tf.identity(pooled, 'final_encodes')
             # print('\n__XLA enabled__\n')
             # print('\n'.join([n.name for n in tf.get_default_graph().as_graph_def().node
             #                  if '_XlaCompile' in n.attr.keys() and bool(n.attr.get('_XlaCompile'))]))
@@ -164,18 +166,18 @@ def model_fn_builder(bert_config, init_checkpoint, use_one_hot_embeddings=False,
             #                  if '_XlaCompile' in n.attr.keys() and not bool(n.attr.get('_XlaCompile'))]))
             # print('\n__XLA not exist__\n', flush=True)
 
-                print('train vars: %d' % len(tvars))
-                tmp_g = tf.get_default_graph().as_graph_def()
-                print('before : %d' % len(tmp_g.node), flush=True)
-                print('\n'.join([n.name for n in tf.get_default_graph().as_graph_def().node]))
+            print('train vars: %d' % len(tvars))
+            tmp_g = tf.get_default_graph().as_graph_def()
+            print('before : %d' % len(tmp_g.node), flush=True)
+            print('\n'.join([n.name for n in tf.get_default_graph().as_graph_def().node]))
 
-                tmp_g = tf.graph_util.convert_variables_to_constants(tf.get_default_session(), tmp_g,
-                                                                     [pooled])
-                print('after constant: %d' % len(tmp_g.node), flush=True)
-                print('after constant: %s' % tmp_g, flush=True)
-                print('__removed__', flush=True)
-                tmp_g = tf.graph_util.remove_training_nodes(tmp_g)
-                print('after : %d' % len(tmp_g.node), flush=True)
+            tmp_g = tf.graph_util.convert_variables_to_constants(tf.get_default_session(), tmp_g,
+                                                                 ['final_encodes'])
+            print('after constant: %d' % len(tmp_g.node), flush=True)
+            print('after constant: %s' % tmp_g, flush=True)
+            print('__removed__', flush=True)
+            tmp_g = tf.graph_util.remove_training_nodes(tmp_g)
+            print('after : %d' % len(tmp_g.node), flush=True)
 
             return EstimatorSpec(mode=mode, predictions={
                 'client_id': client_id,

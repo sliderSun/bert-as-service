@@ -163,14 +163,11 @@ def model_fn_builder(bert_config, init_checkpoint, use_one_hot_embeddings=False,
             # print('\n'.join([n.name for n in tf.get_default_graph().as_graph_def().node
             #                  if '_XlaCompile' in n.attr.keys() and not bool(n.attr.get('_XlaCompile'))]))
             # print('\n__XLA not exist__\n', flush=True)
-            # print('\n'.join([n.name for n in tf.get_default_graph().as_graph_def().node
-            #                  if '_XlaCompile' not in n.attr.keys()]))
 
             print('train vars: %d' % len(tvars))
             tmp_g = tf.get_default_graph().as_graph_def()
             print('before : %d' % len(tmp_g.node), flush=True)
-            for n in tmp_g.node:
-                print(n.name, flush=True)
+            print('\n'.join([n.name for n in tf.get_default_graph().as_graph_def().node]))
 
             tmp_g = tf.graph_util.convert_variables_to_constants(tf.get_default_session(), tmp_g,
                                                                  [pooled])

@@ -106,6 +106,8 @@ def model_fn_builder(bert_config, init_checkpoint, use_one_hot_embeddings=False,
 
         jit_scope = tf.contrib.compiler.jit.experimental_jit_scope if use_xla else contextlib.suppress
         sess = tf.Session()
+        x = tf.constant(1.0)
+        print(sess.run(x))
 
         with jit_scope():
 

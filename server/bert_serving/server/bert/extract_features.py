@@ -169,8 +169,9 @@ def model_fn_builder(bert_config, init_checkpoint, use_one_hot_embeddings=False,
             print('train vars: %d' % len(tvars))
             tmp_g = tf.get_default_graph().as_graph_def()
             print('before : %d' % len(tmp_g.node), flush=True)
-            print('\n'.join([n.name for n in tf.get_default_graph().as_graph_def().node]))
+            # print('\n'.join([n.name for n in tf.get_default_graph().as_graph_def().node]))
 
+            print(tf.Session())
             tmp_g = tf.graph_util.convert_variables_to_constants(tf.Session(), tmp_g, ['final_encodes'])
             print('after constant: %d' % len(tmp_g.node), flush=True)
             print('after constant: %s' % tmp_g, flush=True)

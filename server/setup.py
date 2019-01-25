@@ -28,8 +28,9 @@ setup(
         'termcolor>=1.1'
     ],
     extras_require={
-        'tensorflow': ['tensorflow>=1.10.0'],
-        'tensorflow_gpu': ['tensorflow-gpu>=1.10.0'],
+        'cpu': ['tensorflow>=1.10.0'],
+        'gpu': ['tensorflow-gpu>=1.10.0'],
+        'http': ['flask', 'flask-compress', 'flask-cors', 'flask-json', 'bert-serving-client']
     },
     classifiers=(
         'Programming Language :: Python :: 3.6',
@@ -37,8 +38,9 @@ setup(
         'Operating System :: OS Independent',
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
     ),
-    scripts=[
-        'bin/bert-serving-start',
-    ],
+    entry_points={
+        'console_scripts': ['bert-serving-start=bert_serving.server.cli:main',
+                            'bert-serving-benchmark=bert_serving.server.cli:benchmark'],
+    },
     keywords='bert nlp tensorflow machine learning sentence encoding embedding serving',
 )

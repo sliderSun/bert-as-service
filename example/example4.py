@@ -16,27 +16,24 @@ import time
 
 import GPUtil
 import tensorflow as tf
-from bert_serving.client import BertClient
+from bert_serving.client import ConcurrentBertClient
 
 os.environ['CUDA_VISIBLE_DEVICES'] = str(GPUtil.getFirstAvailable())
 
-train_fp = ['/data/cips/data/lab/data/dataset/final_all_data/exercise_contest/data_train.json']
+train_fp = ['/data/cips/data/larry-autoencoder/cail_0518/data_train.json']
 batch_size = 256
 num_parallel_calls = 4
 num_concurrent_clients = 10  # should be greater than `num_parallel_calls`
 
-bc_clients = [BertClient(show_server_config=False) for _ in range(num_concurrent_clients)]
+# to support `num_parallel_calls` in tf.data, you need ConcurrentBertClient
+bc = ConcurrentBertClient()
 
 
 def get_encodes(x):
     # x is `batch_size` of lines, each of which is a json object
     samples = [json.loads(l) for l in x]
     text = [s['fact'][-50:] for s in samples]
-    # get a client from available clients
-    bc_client = bc_clients.pop()
-    features = bc_client.encode(text)
-    # after use, put it back
-    bc_clients.append(bc_client)
+    features = bc.encode(text)
     labels = [0 for _ in text]
     return features, labels
 

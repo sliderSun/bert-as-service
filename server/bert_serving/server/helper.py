@@ -2,13 +2,15 @@ import argparse
 import logging
 import os
 import sys
+import time
 import uuid
 
 import zmq
+from termcolor import colored
 from zmq.utils import jsonapi
 
 __all__ = ['set_logger', 'send_ndarray', 'get_args_parser',
-           'check_tf_version', 'auto_bind', 'import_tf']
+           'check_tf_version', 'auto_bind', 'import_tf', 'TimeContext']
 
 
 def set_logger(context, verbose=False):
@@ -53,6 +55,19 @@ def send_ndarray(src, dest, X, req_id=b'', flags=0, copy=True, track=False):
     return src.send_multipart([dest, jsonapi.dumps(md), X, req_id], flags, copy=copy, track=track)
 
 
+def check_max_seq_len(value):
+    if value is None or value.lower() == 'none':
+        return None
+    try:
+        ivalue = int(value)
+        if ivalue <= 3:
+            raise argparse.ArgumentTypeError("%s is an invalid int value must be >3 "
+                                             "(account for maximum three special symbols in BERT model) or NONE" % value)
+    except TypeError:
+        raise argparse.ArgumentTypeError("%s is an invalid int value" % value)
+    return ivalue
+
+
 def get_args_parser():
     from . import __version__
     from .graph import PoolingStrategy
@@ -75,8 +90,9 @@ def get_args_parser():
 
     group2 = parser.add_argument_group('BERT Parameters',
                                        'config how BERT model and pooling works')
-    group2.add_argument('-max_seq_len', type=int, default=25,
-                        help='maximum length of a sequence')
+    group2.add_argument('-max_seq_len', type=check_max_seq_len, default=25,
+                        help='maximum length of a sequence, longer sequence will be trimmed on the right side. '
+                             'set it to NONE for dynamically using the longest sequence in a (mini)batch.')
     group2.add_argument('-pooling_layer', type=int, nargs='+', default=[-2],
                         help='the encoder layer(s) that receives pooling. \
                         Give a list in order to concatenate several layers into one')
@@ -87,6 +103,8 @@ def get_args_parser():
                         help='masking the embedding on [CLS] and [SEP] with zero. \
                         When pooling_strategy is in {CLS_TOKEN, FIRST_TOKEN, SEP_TOKEN, LAST_TOKEN} \
                         then the embedding is preserved, otherwise the embedding is masked to zero before pooling')
+    group2.add_argument('-show_tokens_to_client', action='store_true', default=False,
+                        help='sending tokenization results to client')
 
     group3 = parser.add_argument_group('Serving Configs',
                                        'config how server utilizes GPU/CPU resources')
@@ -124,6 +142,11 @@ def get_args_parser():
     group3.add_argument('-prefetch_size', type=int, default=10,
                         help='the number of batches to prefetch on each worker. When running on a CPU-only machine, \
                         this is set to 0 for comparability')
+    group3.add_argument('-fixed_embed_length', action='store_true', default=False,
+                        help='when "max_seq_len" is set to None, the server determines the "max_seq_len" according to '
+                             'the actual sequence lengths within each batch. When "pooling_strategy=NONE", '
+                             'this may cause two ".encode()" from the same client results in different sizes [B, T, D].'
+                             'Turn this on to fix the "T" in [B, T, D] to "max_position_embeddings" in bert json config.')
 
     parser.add_argument('-verbose', action='store_true', default=False,
                         help='turn on tensorflow logging for debug')
@@ -194,3 +217,16 @@ def get_benchmark_parser():
                        help='number of repeats per experiment (must >2), '
                             'as the first two results are omitted for warm-up effect')
     return parser
+
+
+class TimeContext:
+    def __init__(self, msg):
+        self._msg = msg
+
+    def __enter__(self):
+        self.start = time.perf_counter()
+        print(self._msg, end=' ...\t', flush=True)
+
+    def __exit__(self, typ, value, traceback):
+        self.duration = time.perf_counter() - self.start
+        print(colored('    [%3.3f secs]' % self.duration, 'green'), flush=True)
